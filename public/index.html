@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Railway Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, select {
+            margin: 5px;
+            padding: 5px;
+        }
+        button {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Railway Management System</h1>
+
+    <div class="section">
+        <h2>Trains</h2>
+        <form id="trainForm">
+            <input type="text" id="trainName" placeholder="Train Name" required>
+            <input type="number" id="totalSeats" placeholder="Total Seats" required>
+            <input type="number" id="farePerKm" placeholder="Fare per KM" step="0.01" required>
+            <button type="submit">Add Train</button>
+        </form>
+        <table id="trainsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Total Seats</th>
+                    <th>Fare per KM</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Stations</h2>
+        <form id="stationForm">
+            <input type="text" id="stationName" placeholder="Station Name" required>
+            <input type="text" id="city" placeholder="City" required>
+            <button type="submit">Add Station</button>
+        </form>
+        <table id="stationsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>City</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Schedules</h2>
+        <form id="scheduleForm">
+            <select id="trainId" required></select>
+            <select id="fromStation" required></select>
+            <select id="toStation" required></select>
+            <input type="time" id="departureTime" required>
+            <input type="time" id="arrivalTime" required>
+            <input type="number" id="distanceKm" placeholder="Distance (KM)" required>
+            <button type="submit">Add Schedule</button>
+        </form>
+        <table id="schedulesTable">
+            <thead>
+                <tr>
+                    <th>Train</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Departure</th>
+                    <th>Arrival</th>
+                    <th>Distance</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Bookings</h2>
+        <form id="bookingForm">
+            <select id="scheduleId" required></select>
+            <input type="text" id="passengerName" placeholder="Passenger Name" required>
+            <input type="number" id="passengerAge" placeholder="Age" required>
+            <input type="number" id="seatNumber" placeholder="Seat Number" required>
+            <button type="submit">Make Booking</button>
+        </form>
+        <table id="bookingsTable">
+            <thead>
+                <tr>
+                    <th>Train</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Passenger</th>
+                    <th>Age</th>
+                    <th>Seat</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+
+        // Utility function to fetch data
+        async function fetchData(endpoint) {
+            const response = await fetch(`${API_URL}/${endpoint}`);
+            return await response.json();
+        }
+
+        // Utility function to post data
+        async function postData(endpoint, data) {
+            const response = await fetch(`${API_URL}/${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+            return await response.json();
+        }
+
+        // Load and display trains
+        async function loadTrains() {
+            const trains = await fetchData('trains');
+            const tbody = document.querySelector('#trainsTable tbody');
+            tbody.innerHTML = trains.map(train => `
+                <tr>
+                    <td>${train.train_id}</td>
+                    <td>${train.train_name}</td>
+                    <td>${train.total_seats}</td>
+                    <td>${train.fare_per_km}</td>
+                </tr>
+            `).join('');
+            
+            // Update train select in schedule form
+            const trainSelect = document.getElementById('trainId');
+            trainSelect.innerHTML = trains.map(train => 
+                `<option value="${train.train_id}">${train.train_name}</option>`
+            ).join('');
+        }
+
+        // Load and display stations
+        async function loadStations() {
+            const stations = await fetchData('stations');
+            const tbody = document.querySelector('#stationsTable tbody');
+            tbody.innerHTML = stations.map(station => `
+                <tr>
+                    <td>${station.station_id}</td>
+                    <td>${station.station_name}</td>
+                    <td>${station.city}</td>
+                </tr>
+            `).join('');
+
+            // Update station selects in schedule form
+            const fromStation = document.getElementById('fromStation');
+            const toStation = document.getElementById('toStation');
+            const options = stations.map(station => 
+                `<option value="${station.station_id}">${station.station_name}</option>`
+            ).join('');
+            fromStation.innerHTML = options;
+            toStation.innerHTML = options;
+        }
+
+        // Load and display schedules
+        async function loadSchedules() {
+            const schedules = await fetchData('schedules');
+            const tbody = document.querySelector('#schedulesTable tbody');
+            tbody.innerHTML = schedules.map(schedule => `
+                <tr>
+                    <td>${schedule.train_name}</td>
+                    <td>${schedule.from_station_name}</td>
+                    <td>${schedule.to_station_name}</td>
+                    <td>${schedule.departure_time}</td>
+                    <td>${schedule.arrival_time}</td>
+                    <td>${schedule.distance_km}</td>
+                </tr>
+            `).join('');
+
+            // Update schedule select in booking form
+            const scheduleSelect = document.getElementById('scheduleId');
+            scheduleSelect.innerHTML = schedules.map(schedule => 
+                `<option value="${schedule.schedule_id}">
+                    ${schedule.train_name} - ${schedule.from_station_name} to ${schedule.to_station_name}
+                </option>`
+            ).join('');
+        }
+
+        // Load and display bookings
+        async function loadBookings() {
+            const bookings = await fetchData('bookings');
+            const tbody = document.querySelector('#bookingsTable tbody');
+            tbody.innerHTML = bookings.map(booking => `
+                <tr>
+                    <td>${booking.train_name}</td>
+                    <td>${booking.from_station}</td>
+                    <td>${booking.to_station}</td>
+                    <td>${booking.passenger_name}</td>
+                    <td>${booking.passenger_age}</td>
+                    <td>${booking.seat_number}</td>
+                    <td>${booking.booking_date}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Form submission handlers
+        document.getElementById('trainForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                train_name: document.getElementById('trainName').value,
+                total_seats: parseInt(document.getElementById('totalSeats').value),
+                fare_per_km: parseFloat(document.getElementById('farePerKm').value)
+            };
+            await postData('trains', data);
+            loadTrains();
+            e.target.reset();
+        });
+
+        document.getElementById('stationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                station_name: document.getElementById('stationName').value,
+                city: document.getElementById('city').value
+            };
+            await postData('stations', data);
+            loadStations();
+            e.target.reset();
+        });
+
+        document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                train_id: parseInt(document.getElementById('trainId').value),
+                from_station: parseInt(document.getElementById('fromStation').value),
+                to_station: parseInt(document.getElementById('toStation').value),
+                departure_time: document.getElementById('departureTime').value,
+                arrival_time: document.getElementById('arrivalTime').value,
+                distance_km: parseInt(document.getElementById('distanceKm').value)
+            };
+            await postData('schedules', data);
+            loadSchedules();
+            e.target.reset();
+        });
+
+        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                schedule_id: parseInt(document.getElementById('scheduleId').value),
+                passenger_name: document.getElementById('passengerName').value,
+                passenger_age: parseInt(document.getElementById('passengerAge').value),
+                seat_number: parseInt(document.getElementById('seatNumber').value)
+            };
+            await postData('bookings', data);
+            loadBookings();
+            e.target.reset();
+        });
+
+        // Initial load
+        loadTrains();
+        loadStations();
+        loadSchedules();
+        loadBookings();
+    </script>
+</body>
+</html> 
