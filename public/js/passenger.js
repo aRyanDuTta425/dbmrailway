@@ -74,30 +74,57 @@ async function loadTrains() {
 
 // Display trains in the table
 function displayTrains(trains) {
-    trainsTable.innerHTML = '';
-    
-    if (trains.length === 0) {
-        const row = trainsTable.insertRow();
-        row.innerHTML = '<td colspan="8" class="text-center">No trains found for this route.</td>';
+    const tableBody = document.getElementById('trainsTable').getElementsByTagName('tbody')[0];
+    if (!tableBody) {
+        console.error('Could not find trains table body');
         return;
     }
     
+    tableBody.innerHTML = '';
+    
+    if (trains.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="8" class="text-center">No trains found for this route.</td>';
+        tableBody.appendChild(row);
+        return;
+    }
+
     trains.forEach(train => {
-        const row = trainsTable.insertRow();
+        console.log('Displaying train:', {
+            train_name: train.train_name,
+            total_fare: train.total_fare,
+            distance_km: train.distance_km,
+            fare_per_km: train.fare_per_km,
+            fare_multiplier: train.fare_multiplier
+        });
+
+        // Calculate fare if not provided
+        let fare = train.total_fare;
+        if (!fare || isNaN(fare)) {
+            const distanceKm = parseFloat(train.distance_km) || 0;
+            const farePerKm = parseFloat(train.fare_per_km) || 0;
+            const fareMultiplier = parseFloat(train.fare_multiplier) || 1.0;
+            fare = Math.round(distanceKm * farePerKm * fareMultiplier);
+            console.log('Calculated fare:', {
+                train_name: train.train_name,
+                calculation: `${distanceKm} * ${farePerKm} * ${fareMultiplier} = ${fare}`
+            });
+        }
+
+        const row = document.createElement('tr');
         row.innerHTML = `
             <td>${train.train_name}</td>
+            <td>${train.train_type}</td>
             <td>${train.from_station_name}</td>
             <td>${train.to_station_name}</td>
             <td>${formatTime(train.departure_time)}</td>
             <td>${formatTime(train.arrival_time)}</td>
-            <td>${train.train_type}</td>
-            <td>₹${Math.round(train.distance_km * train.fare_per_km)}</td>
+            <td>₹${fare}</td>
             <td>
-                <button class="btn btn-primary btn-sm" onclick="bookTicket(${train.schedule_id})">
-                    Book Now
-                </button>
+                <button onclick="bookTicket(${train.schedule_id}, ${train.train_id}, '${train.from_station_name}', '${train.to_station_name}', ${fare})" class="btn btn-primary btn-sm">Book Now</button>
             </td>
         `;
+        tableBody.appendChild(row);
     });
 }
 
@@ -126,8 +153,8 @@ searchForm.addEventListener('submit', (e) => {
 });
 
 // Book ticket function
-function bookTicket(scheduleId) {
-    window.location.href = `/views/passenger/book-ticket.html?schedule=${scheduleId}`;
+function bookTicket(scheduleId, trainId, fromStationName, toStationName, totalFare) {
+    window.location.href = `/views/passenger/book-ticket.html?schedule=${scheduleId}&train=${trainId}&from=${fromStationName}&to=${toStationName}&fare=${totalFare}`;
 }
 
 // Show alert message

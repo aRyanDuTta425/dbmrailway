@@ -1055,7 +1055,16 @@ app.post('/api/search-trains', async (req, res) => {
     console.log('Converted date to day name:', dayName);
 
     const query = `
-      SELECT DISTINCT ON (t.train_id)
+      WITH first_compartment AS (
+        SELECT DISTINCT ON (t.train_id) 
+          t.train_id,
+          tc2.fare_multiplier
+        FROM trains t
+        JOIN train_compartments tc ON tc.train_id = t.train_id
+        JOIN train_classes tc2 ON tc.class_id = tc2.class_id
+        ORDER BY t.train_id, tc.compartment_number
+      )
+      SELECT DISTINCT
         s.schedule_id,
         s.departure_time,
         s.arrival_time,
@@ -1066,27 +1075,54 @@ app.post('/api/search-trains', async (req, res) => {
         tt.type_name as train_type,
         r.distance_km,
         fs.station_name as from_station_name,
-        ts.station_name as to_station_name
+        ts.station_name as to_station_name,
+        COALESCE(fc.fare_multiplier, 1.0) as fare_multiplier,
+        ROUND(CAST(r.distance_km * t.fare_per_km * COALESCE(fc.fare_multiplier, 1.0) AS NUMERIC)) as total_fare
       FROM schedules s
       JOIN trains t ON s.train_id = t.train_id
       JOIN train_types tt ON t.train_type = tt.type_id
       JOIN routes r ON s.route_id = r.route_id
       JOIN stations fs ON r.from_station = fs.station_id
       JOIN stations ts ON r.to_station = ts.station_id
+      LEFT JOIN first_compartment fc ON fc.train_id = t.train_id
       WHERE r.from_station = $1 
       AND r.to_station = $2
       AND s.is_active = true
       AND t.is_active = true
       AND r.is_active = true
       AND $3 = ANY(s.days_of_operation)
-      ORDER BY t.train_id, s.departure_time
+      ORDER BY s.departure_time
     `;
     console.log('Executing query with params:', [from_station, to_station, dayName]);
     
     const result = await pool.query(query, [from_station, to_station, dayName]);
     console.log('Query result:', result.rows);
     
-    res.json(result.rows);
+    // Ensure all rows have a valid total_fare
+    const processedRows = result.rows.map(row => {
+      console.log('Processing row:', {
+        train_name: row.train_name,
+        distance_km: row.distance_km,
+        fare_per_km: row.fare_per_km,
+        fare_multiplier: row.fare_multiplier,
+        total_fare: row.total_fare
+      });
+
+      if (row.total_fare === null || isNaN(row.total_fare)) {
+        // Calculate fare manually if total_fare is missing
+        const fareMultiplier = row.fare_multiplier || 1.0;
+        const distanceKm = parseFloat(row.distance_km) || 0;
+        const farePerKm = parseFloat(row.fare_per_km) || 0;
+        row.total_fare = Math.round(distanceKm * farePerKm * fareMultiplier);
+        console.log('Manually calculated fare:', {
+          train_name: row.train_name,
+          calculation: `${distanceKm} * ${farePerKm} * ${fareMultiplier} = ${row.total_fare}`
+        });
+      }
+      return row;
+    });
+    
+    res.json(processedRows);
   } catch (err) {
     console.error('Error searching trains:', err);
     res.status(500).json({ error: err.message });
