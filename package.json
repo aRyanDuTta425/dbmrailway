@@ -5,7 +5,10 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "init-db": "node initDb.js",
+    "seed-db": "node seedData.js",
+    "setup-db": "npm run init-db && npm run seed-db"
   },
   "dependencies": {
     "cors": "^2.8.5",

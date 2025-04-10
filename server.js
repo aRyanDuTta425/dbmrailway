@@ -1749,3 +1749,65 @@ app.post('/api/admin/trains', async (req, res) => {
         client.release();
     }
 });
+
+// Cancel a booking
+app.post('/api/bookings/:id/cancel', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    // First check if the booking exists and is not already cancelled
+    const bookingCheck = await client.query(
+      'SELECT booking_status, schedule_id, compartment_id, seat_number FROM bookings WHERE booking_id = $1',
+      [req.params.id]
+    );
+    
+    if (bookingCheck.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    
+    if (bookingCheck.rows[0].booking_status === 'cancelled') {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Booking is already cancelled' });
+    }
+    
+    // Update the booking status to cancelled
+    await client.query(
+      'UPDATE bookings SET booking_status = $1 WHERE booking_id = $2',
+      ['cancelled', req.params.id]
+    );
+    
+    // Update seat status back to available
+    await client.query(
+      'UPDATE seat_status SET status = $1 WHERE schedule_id = $2 AND compartment_id = $3 AND seat_number = $4',
+      ['available', bookingCheck.rows[0].schedule_id, bookingCheck.rows[0].compartment_id, bookingCheck.rows[0].seat_number]
+    );
+    
+    // Get the updated booking details
+    const result = await client.query(`
+      SELECT b.*, t.train_name, 
+             fs.station_name as from_station_name,
+             ts.station_name as to_station_name,
+             s.departure_time, s.arrival_time,
+             b.booking_date as journey_date
+      FROM bookings b
+      JOIN schedules s ON b.schedule_id = s.schedule_id
+      JOIN trains t ON s.train_id = t.train_id
+      JOIN routes r ON s.route_id = r.route_id
+      JOIN stations fs ON r.from_station = fs.station_id
+      JOIN stations ts ON r.to_station = ts.station_id
+      WHERE b.booking_id = $1
+    `, [req.params.id]);
+    
+    await client.query('COMMIT');
+    res.json(result.rows[0]);
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error cancelling booking:', err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
