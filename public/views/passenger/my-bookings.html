@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings - Railway Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/views/passenger">Railway Management System</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/views/passenger">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/views/passenger/book-ticket.html">Book Ticket</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/views/passenger/my-bookings.html">My Bookings</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>My Bookings</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="searchBooking">Search by Booking ID or Name</label>
+                                    <input type="text" class="form-control" id="searchBooking" placeholder="Enter Booking ID or Name">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="filterStatus">Filter by Status</label>
+                                    <select class="form-control" id="filterStatus">
+                                        <option value="">All Status</option>
+                                        <option value="confirmed">Confirmed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="bookingsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Booking ID</th>
+                                        <th>Train Name</th>
+                                        <th>From</th>
+                                        <th>To</th>
+                                        <th>Journey Date</th>
+                                        <th>Passenger Name</th>
+                                        <th>Seat Number</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Booking data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Details Modal -->
+    <div class="modal fade" id="bookingDetailsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Booking Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="booking-details">
+                        <table class="table">
+                            <tr>
+                                <th>Passenger Name:</th>
+                                <td id="modalPassengerName"></td>
+                            </tr>
+                            <tr>
+                                <th>Age:</th>
+                                <td id="modalPassengerAge"></td>
+                            </tr>
+                            <tr>
+                                <th>Gender:</th>
+                                <td id="modalPassengerGender"></td>
+                            </tr>
+                            <tr>
+                                <th>Train:</th>
+                                <td id="modalTrainName"></td>
+                            </tr>
+                            <tr>
+                                <th>Journey Date:</th>
+                                <td id="modalJourneyDate"></td>
+                            </tr>
+                            <tr>
+                                <th>Seat Number:</th>
+                                <td id="modalSeatNumber"></td>
+                            </tr>
+                            <tr>
+                                <th>Fare Amount:</th>
+                                <td id="modalFareAmount"></td>
+                            </tr>
+                            <tr>
+                                <th>Payment Status:</th>
+                                <td id="modalPaymentStatus"></td>
+                            </tr>
+                            <tr>
+                                <th>Booking Status:</th>
+                                <td id="modalBookingStatus"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" id="cancelBookingBtn">Cancel Booking</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/my-bookings.js"></script>
+</body>
+</html> 

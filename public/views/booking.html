@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Train Ticket</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Book Train Ticket</h2>
+        
+        <!-- Alert container -->
+        <div id="alert" class="alert" style="display: none;"></div>
+        
+        <!-- Schedule Details -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Schedule Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="trainSelect" class="form-label">Train</label>
+                            <select class="form-select" id="trainSelect" disabled>
+                                <option value="">Select Train</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="journeyDate" class="form-label">Journey Date</label>
+                            <input type="date" class="form-control" id="journeyDate" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Seat Selection -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Select Seat</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="classSelect" class="form-label">Class</label>
+                    <select class="form-select" id="classSelect">
+                        <option value="">Select Class</option>
+                    </select>
+                </div>
+                
+                <div id="seatMap" class="seat-map">
+                    <!-- Seat map will be loaded here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Passenger Details -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Passenger Details</h5>
+            </div>
+            <div class="card-body">
+                <form id="bookingForm" class="mt-4">
+                    <input type="hidden" id="scheduleId" name="scheduleId">
+                    <input type="hidden" id="seatNumber" name="seatNumber">
+                    <input type="hidden" id="compartmentId" name="compartmentId">
+                    <input type="hidden" id="classId" name="classId">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="passengerName" class="form-label">Passenger Name</label>
+                                <input type="text" class="form-control" id="passengerName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="passengerAge" class="form-label">Age</label>
+                                <input type="number" class="form-control" id="passengerAge" min="1" max="120" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="passengerGender" class="form-label">Gender</label>
+                                <select class="form-select" id="passengerGender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="M">Male</option>
+                                    <option value="F">Female</option>
+                                    <option value="O">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Confirm Booking</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/booking.js"></script>
+</body>
+</html> 
