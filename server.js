@@ -592,15 +592,27 @@ app.post('/api/bookings', async (req, res) => {
   }
 });
 
-// Get all bookings for admin
+// Get all bookings (admin)
 app.get('/api/admin/bookings', async (req, res) => {
   try {
-    const { search, status, date } = req.query;
+    const { booking_id, train, date, status } = req.query;
     let query = `
-      SELECT b.*, t.train_name, 
-             fs.station_name as from_station_name,
-             ts.station_name as to_station_name,
-             s.departure_time, s.arrival_time
+      SELECT 
+        b.booking_id,
+        b.booking_date,
+        b.booking_date as journey_date,
+        b.passenger_name,
+        b.passenger_age,
+        b.passenger_gender,
+        b.seat_number,
+        b.fare_amount,
+        b.booking_status,
+        b.payment_status,
+        t.train_name,
+        s.departure_time,
+        s.arrival_time,
+        fs.station_name as from_station_name,
+        ts.station_name as to_station_name
       FROM bookings b
       JOIN schedules s ON b.schedule_id = s.schedule_id
       JOIN trains t ON s.train_id = t.train_id
@@ -609,33 +621,41 @@ app.get('/api/admin/bookings', async (req, res) => {
       JOIN stations ts ON r.to_station = ts.station_id
       WHERE 1=1
     `;
+    
     const params = [];
     let paramCount = 1;
-
-    if (search) {
-      query += ` AND (b.booking_id::text LIKE $${paramCount} OR b.passenger_name ILIKE $${paramCount})`;
-      params.push(`%${search}%`);
+    
+    if (booking_id) {
+      query += ` AND b.booking_id = $${paramCount}`;
+      params.push(booking_id);
       paramCount++;
     }
-
+    
+    if (train) {
+      query += ` AND t.train_name ILIKE $${paramCount}`;
+      params.push(`%${train}%`);
+      paramCount++;
+    }
+    
+    if (date) {
+      query += ` AND DATE(b.booking_date) = $${paramCount}`;
+      params.push(date);
+      paramCount++;
+    }
+    
     if (status) {
       query += ` AND b.booking_status = $${paramCount}`;
       params.push(status);
       paramCount++;
     }
-
-    if (date) {
-      query += ` AND b.booking_date = $${paramCount}`;
-      params.push(date);
-      paramCount++;
-    }
-
-    query += ` ORDER BY b.booking_date DESC, b.booking_id DESC`;
-
+    
+    query += ` ORDER BY b.booking_date DESC`;
+    
+    console.log('Executing query:', query, 'with params:', params);
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
-    console.error('Error fetching admin bookings:', err);
+    console.error('Error fetching bookings:', err);
     res.status(500).json({ error: err.message });
   }
 });

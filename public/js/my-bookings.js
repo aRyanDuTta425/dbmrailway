@@ -1,14 +1,21 @@
 // DOM Elements
-const searchBooking = document.getElementById('searchBooking');
-const filterStatus = document.getElementById('filterStatus');
-const bookingsTable = document.getElementById('bookingsTable').getElementsByTagName('tbody')[0];
-const bookingDetailsModal = new bootstrap.Modal(document.getElementById('bookingDetailsModal'));
-const cancelBookingBtn = document.getElementById('cancelBookingBtn');
+let searchBooking;
+let filterStatus;
+let bookingsTable;
+let bookingDetailsModal;
+let cancelBookingBtn;
 
 let currentBookingId = null;
 
 // Initialize the page
 document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize DOM elements
+    searchBooking = document.getElementById('searchBooking');
+    filterStatus = document.getElementById('filterStatus');
+    bookingsTable = document.getElementById('bookingsTable')?.getElementsByTagName('tbody')[0];
+    bookingDetailsModal = new bootstrap.Modal(document.getElementById('bookingDetailsModal'));
+    cancelBookingBtn = document.getElementById('cancelBookingBtn');
+
     // Get booking ID from URL if present
     const urlParams = new URLSearchParams(window.location.search);
     const bookingId = urlParams.get('booking');
@@ -18,15 +25,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         await loadBookings();
     }
+
+    // Set up event listeners
+    if (searchBooking) {
+        searchBooking.addEventListener('input', loadBookings);
+    }
+    if (filterStatus) {
+        filterStatus.addEventListener('change', loadBookings);
+    }
+    if (cancelBookingBtn) {
+        cancelBookingBtn.addEventListener('click', () => {
+            if (currentBookingId) {
+                cancelBooking(currentBookingId);
+            }
+        });
+    }
 });
 
 // Load bookings
 async function loadBookings() {
     try {
-        const params = new URLSearchParams({
-            search: searchBooking.value,
-            status: filterStatus.value
-        });
+        const params = new URLSearchParams();
+        if (searchBooking) {
+            params.append('search', searchBooking.value);
+        }
+        if (filterStatus) {
+            params.append('status', filterStatus.value);
+        }
 
         const response = await fetch(`/api/bookings?${params}`);
         if (!response.ok) {
@@ -47,7 +72,18 @@ async function loadBookings() {
 
 // Display bookings in the table
 function displayBookings(bookings) {
+    if (!bookingsTable) {
+        console.error('Bookings table not found');
+        return;
+    }
+
     bookingsTable.innerHTML = '';
+    
+    if (bookings.length === 0) {
+        const row = bookingsTable.insertRow();
+        row.innerHTML = '<td colspan="9" class="text-center">No bookings found</td>';
+        return;
+    }
     
     bookings.forEach(booking => {
         const row = bookingsTable.insertRow();
@@ -92,7 +128,9 @@ async function showBookingDetails(bookingId) {
         document.getElementById('modalBookingStatus').textContent = booking.booking_status;
         
         // Show/hide cancel button based on booking status
-        cancelBookingBtn.style.display = booking.booking_status === 'confirmed' ? 'block' : 'none';
+        if (cancelBookingBtn) {
+            cancelBookingBtn.style.display = booking.booking_status === 'confirmed' ? 'block' : 'none';
+        }
         
         // Store current booking ID
         currentBookingId = bookingId;
@@ -147,17 +185,6 @@ function getStatusBadge(status) {
     };
     return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
 }
-
-// Handle search and filter
-searchBooking.addEventListener('input', loadBookings);
-filterStatus.addEventListener('change', loadBookings);
-
-// Handle cancel button click in modal
-cancelBookingBtn.addEventListener('click', () => {
-    if (currentBookingId) {
-        cancelBooking(currentBookingId);
-    }
-});
 
 // Show alert message
 function showAlert(message, type = 'info') {

@@ -1,12 +1,27 @@
 // DOM Elements
-const bookingsTable = document.getElementById('bookingsTable').getElementsByTagName('tbody')[0];
-const bookingSearchForm = document.getElementById('bookingSearchForm');
-const bookingStatusFilter = document.getElementById('bookingStatusFilter');
-const bookingDateFilter = document.getElementById('bookingDateFilter');
+let bookingsTable;
+let bookingSearchForm;
+let searchBookingId;
+let searchTrain;
+let searchDate;
+let searchStatus;
+let resetSearchBtn;
 
 // Initialize the page
 document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize DOM elements
+    bookingsTable = document.getElementById('bookingsTable')?.getElementsByTagName('tbody')[0];
+    bookingSearchForm = document.getElementById('bookingSearchForm');
+    searchBookingId = document.getElementById('searchBookingId');
+    searchTrain = document.getElementById('searchTrain');
+    searchDate = document.getElementById('searchDate');
+    searchStatus = document.getElementById('searchStatus');
+    resetSearchBtn = document.getElementById('resetSearch');
+
+    // Load initial data
     await loadBookings();
+    
+    // Set up event listeners
     setupEventListeners();
 });
 
@@ -16,24 +31,34 @@ async function loadBookings(filters = {}) {
         let url = '/api/admin/bookings';
         const queryParams = new URLSearchParams();
         
-        if (filters.status) {
-            queryParams.append('status', filters.status);
+        if (filters.bookingId) {
+            queryParams.append('booking_id', filters.bookingId);
+        }
+        
+        if (filters.train) {
+            queryParams.append('train', filters.train);
         }
         
         if (filters.date) {
             queryParams.append('date', filters.date);
         }
         
+        if (filters.status) {
+            queryParams.append('status', filters.status);
+        }
+        
         if (queryParams.toString()) {
             url += `?${queryParams.toString()}`;
         }
         
+        console.log('Fetching bookings with URL:', url);
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const bookings = await response.json();
+        console.log('Received bookings:', bookings);
         displayBookings(bookings);
     } catch (error) {
         console.error('Error loading bookings:', error);
@@ -43,6 +68,11 @@ async function loadBookings(filters = {}) {
 
 // Display bookings in the table
 function displayBookings(bookings) {
+    if (!bookingsTable) {
+        console.error('Bookings table not found');
+        return;
+    }
+    
     bookingsTable.innerHTML = '';
     
     if (bookings.length === 0) {
@@ -84,10 +114,21 @@ function setupEventListeners() {
         bookingSearchForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const filters = {
-                status: bookingStatusFilter.value,
-                date: bookingDateFilter.value
+                bookingId: searchBookingId?.value || '',
+                train: searchTrain?.value || '',
+                date: searchDate?.value || '',
+                status: searchStatus?.value || ''
             };
             loadBookings(filters);
+        });
+    }
+    
+    if (resetSearchBtn) {
+        resetSearchBtn.addEventListener('click', () => {
+            if (bookingSearchForm) {
+                bookingSearchForm.reset();
+            }
+            loadBookings();
         });
     }
 }
@@ -184,7 +225,7 @@ function showAlert(message, type = 'info') {
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
     
-    const container = document.querySelector('.container-fluid');
+    const container = document.querySelector('.container');
     container.insertBefore(alertDiv, container.firstChild);
     
     setTimeout(() => {

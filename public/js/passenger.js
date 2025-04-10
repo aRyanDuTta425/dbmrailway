@@ -114,11 +114,11 @@ function displayTrains(trains) {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${train.train_name}</td>
-            <td>${train.train_type}</td>
             <td>${train.from_station_name}</td>
             <td>${train.to_station_name}</td>
             <td>${formatTime(train.departure_time)}</td>
             <td>${formatTime(train.arrival_time)}</td>
+            <td>${train.train_type}</td>
             <td>₹${fare}</td>
             <td>
                 <button onclick="bookTicket(${train.schedule_id}, ${train.train_id}, '${train.from_station_name}', '${train.to_station_name}', ${fare})" class="btn btn-primary btn-sm">Book Now</button>
